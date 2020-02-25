@@ -147,7 +147,7 @@ func (n *NodeGroupResourceSet) addResourcesForNodeGroup() error {
 		LaunchTemplateData: launchTemplateData,
 	})
 
-	vpcZoneIdentifier, err := AssignSubnets(n.spec.AvailabilityZones, n.clusterStackName, n.clusterSpec, n.spec.PrivateNetworking)
+	vpcZoneIdentifier, err := AssignSubnets(n.spec.AvailabilityZones, n.clusterStackName, n.clusterSpec, n.spec.PrivateNetworking, n.spec.CustomSubnets)
 	if err != nil {
 		return err
 	}
@@ -186,15 +186,22 @@ func (n *NodeGroupResourceSet) addResourcesForNodeGroup() error {
 }
 
 // AssignSubnets subnets based on the specified availability zones
-func AssignSubnets(availabilityZones []string, clusterStackName string, clusterSpec *api.ClusterConfig, privateNetworking bool) (interface{}, error) {
+func AssignSubnets(availabilityZones []string, clusterStackName string, clusterSpec *api.ClusterConfig, privateNetworking bool, customSubnets string) (interface{}, error) {
 	// currently goformation type system doesn't allow specifying `VPCZoneIdentifier: { "Fn::ImportValue": ... }`,
 	// and tags don't have `PropagateAtLaunch` field, so we have a custom method here until this gets resolved
 
 	if numNodeGroupsAZs := len(availabilityZones); numNodeGroupsAZs > 0 {
 		subnets := clusterSpec.VPC.Subnets.Private
-		if !privateNetworking {
+		if customSubnets != "" {
+			var ok bool
+			subnets, ok = clusterSpec.VPC.Subnets.Custom[customSubnets]
+			if !ok {
+				return nil, fmt.Errorf("Custom subnets '%s' not found", customSubnets)
+			}
+		} else if !privateNetworking {
 			subnets = clusterSpec.VPC.Subnets.Public
 		}
+
 		makeErrorDesc := func() string {
 			return fmt.Sprintf("(subnets=%#v AZs=%#v)", subnets, availabilityZones)
 		}
@@ -209,6 +216,18 @@ func AssignSubnets(availabilityZones []string, clusterStackName string, clusterS
 			}
 
 			subnetIDs[i] = subnet.ID
+		}
+		return subnetIDs, nil
+	}
+
+	if customSubnets != "" {
+		subnets, ok := clusterSpec.VPC.Subnets.Custom[customSubnets]
+		if !ok {
+			return nil, fmt.Errorf("Custom subnets '%s' not found", customSubnets)
+		}
+		subnetIDs := make([]string, 0, len(subnets))
+		for _, subnet := range subnets {
+			subnetIDs = append(subnetIDs, subnet.ID)
 		}
 		return subnetIDs, nil
 	}

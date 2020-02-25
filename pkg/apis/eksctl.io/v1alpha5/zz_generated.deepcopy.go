@@ -397,6 +397,23 @@ func (in *ClusterSubnets) DeepCopyInto(out *ClusterSubnets) {
 			(*out)[key] = *val.DeepCopy()
 		}
 	}
+	if in.Custom != nil {
+		in, out := &in.Custom, &out.Custom
+		*out = make(map[string]map[string]Network, len(*in))
+		for key, val := range *in {
+			var outVal map[string]Network
+			if val == nil {
+				(*out)[key] = nil
+			} else {
+				in, out := &val, &outVal
+				*out = make(map[string]Network, len(*in))
+				for key, val := range *in {
+					(*out)[key] = *val.DeepCopy()
+				}
+			}
+			(*out)[key] = outVal
+		}
+	}
 	return
 }
 

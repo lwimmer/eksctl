@@ -558,6 +558,8 @@ type NodeGroup struct {
 	Tags map[string]string `json:"tags,omitempty"`
 	// +optional
 	PrivateNetworking bool `json:"privateNetworking"`
+	// +optional
+	CustomSubnets string `json:"customSubnets,omitempty"`
 
 	// +optional
 	SecurityGroups *NodeGroupSGs `json:"securityGroups,omitempty"`
@@ -747,6 +749,8 @@ type ManagedNodeGroup struct {
 	VolumeSize *int `json:"volumeSize,omitempty"`
 	// +optional
 	AvailabilityZones []string `json:"availabilityZones,omitempty"`
+	// +optional
+	CustomSubnets string `json:"customSubnets,omitempty"`
 	// +optional
 	SSH *NodeGroupSSH `json:"ssh,omitempty"`
 

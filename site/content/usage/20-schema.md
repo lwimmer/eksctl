@@ -160,6 +160,14 @@ ClusterStatus:
 ClusterSubnets:
   additionalProperties: false
   properties:
+    custom:
+      patternProperties:
+        .*:
+          patternProperties:
+            .*:
+              $ref: '#/definitions/Network'
+          type: object
+      type: object
     private:
       patternProperties:
         .*:
@@ -294,6 +302,8 @@ ManagedNodeGroup:
       items:
         type: string
       type: array
+    customSubnets:
+      type: string
     iam:
       $ref: '#/definitions/NodeGroupIAM'
     instanceType:
@@ -343,6 +353,8 @@ NodeGroup:
         type: string
       type: array
     clusterDNS:
+      type: string
+    customSubnets:
       type: string
     desiredCapacity:
       type: integer
